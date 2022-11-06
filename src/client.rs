@@ -205,6 +205,21 @@ impl Client {
         .await?;
         Ok(())
     }
+    
+    /// Clone of goto, send command but does not wait/receive message
+    ///
+    /// See [9.1 Navigate To](https://www.w3.org/TR/webdriver1/#dfn-navigate-to) of the WebDriver
+    /// standard.
+    pub async fn download(&self, url: &str) -> Result<(), error::CmdError> {
+        let url = url.to_owned();
+        let base = self.current_url_().await?;
+        let url = base.join(&url)?;
+        self.issue_no_receive(WebDriverCommand::Get(webdriver::command::GetParameters {
+            url: url.into(),
+        }))
+        .await?;
+        Ok(())
+    }
 
     /// Retrieve the currently active URL for this session.
     ///

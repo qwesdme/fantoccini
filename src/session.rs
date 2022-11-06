@@ -319,6 +319,27 @@ impl Client {
             )))
         })
     }
+    
+    pub(crate) async fn issue_no_receive<C>(&self, cmd: C) -> Result<(), error::CmdError>
+    where
+        C: Into<Cmd>,
+    {
+        let (tx, _rx) = oneshot::channel();
+        let cmd = cmd.into();
+        let r = self.tx.send(Task {
+            request: cmd,
+            ack: tx,
+        });
+
+        if r.is_err() {
+            return Err(error::CmdError::Lost(io::Error::new(
+                io::ErrorKind::BrokenPipe,
+                "WebDriver session has been closed",
+            )));
+        }
+
+        Ok(())
+    }
 
     /// Issue the specified [`WebDriverCompatibleCommand`] to the WebDriver instance.
     pub async fn issue_cmd(
